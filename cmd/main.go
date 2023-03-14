@@ -13,7 +13,7 @@ var PORT = "3000"
 func main() {
 	var Router = chi.NewRouter()
 	routes.RegisterRoute(Router)
-	fmt.Printf("Starting server on Port %v", PORT)
+	fmt.Printf("Starting server on Port %v\n", PORT)
 	err := http.ListenAndServe(":"+PORT, Router)
 	if err != nil {
 		panic(err)
