@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/StudentTeacher-Booking-Appointment/pkg/helper"
 	"github.com/StudentTeacher-Booking-Appointment/pkg/model"
@@ -33,8 +34,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(model.ResponseStatus{Err: "unable to create token"})
 	}
 	http.SetCookie(w, &http.Cookie{
-		Name:  "token",
-		Value: tokenString,
+		HttpOnly: true,
+		Expires:  time.Now().Add(time.Hour * 6),
+		SameSite: http.SameSiteLaxMode,
+		Name:     "jwt",
+		Value:    tokenString,
 	})
 	json.NewEncoder(w).Encode(model.ResponseStatus{Status: "Login Successful", Message: fmt.Sprintf("Hello %v. You are a %v", userFromDB["firstname"].(string), userFromDB["role"].(string))})
 
@@ -64,7 +68,15 @@ func StudentSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
-
+func Logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		HttpOnly: true,
+		MaxAge:   -1,
+		SameSite: http.SameSiteLaxMode,
+		Name:     "jwt",
+		Value:    "",
+	})
+}
 func Home(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode("Authenticated")
 }

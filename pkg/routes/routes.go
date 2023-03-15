@@ -10,5 +10,7 @@ import (
 func RegisterRoute(r chi.Router) {
 	r.Post("/login", controller.Login)
 	r.Post("/signup", controller.StudentSignup)
-	r.Get("/", middleware.RequireAuth(controller.Home))
+	r.Get("/logout", controller.Logout)
+	r.Get("/", middleware.RequireAuth(controller.Home, "student"))
+	r.Get("/search", middleware.RequireAuth(controller.SearchTeacher, "student"))
 }

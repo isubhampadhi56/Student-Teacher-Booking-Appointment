@@ -10,7 +10,7 @@ import (
 
 	"github.com/StudentTeacher-Booking-Appointment/pkg/config"
 	"github.com/StudentTeacher-Booking-Appointment/pkg/model"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/go-chi/jwtauth/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -114,42 +114,39 @@ func SignupHelper(user model.User) error {
 }
 
 var jwtSecret = []byte("Hello")
+var tokenAuth *jwtauth.JWTAuth
+
+func init() {
+	tokenAuth = jwtauth.New("HS256", jwtSecret, nil)
+}
 
 // Generate jwt Token
 func GenerateToken(user map[string]interface{}) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS512)
 
-	claims := token.Claims.(jwt.MapClaims)
-	claims["username"] = user["username"].(string)
-	claims["role"] = user["role"].(string)
-	claims["exp"] = time.Now().Add(time.Hour * 1).Unix()
-	claims["refresh_token"] = user["refresh_token"].(string)
-
-	tokenString, err := token.SignedString(jwtSecret)
+	claims := map[string]interface{}{
+		"username":      user["username"].(string),
+		"role":          user["role"].(string),
+		"exp":           time.Now().Add(time.Second * 10).Unix(),
+		"refresh_token": user["refresh_token"].(string),
+	}
+	_, tokenString, err := tokenAuth.Encode(claims)
 	if err != nil {
-		return "", err
+		return "", errors.New("internal server error")
 	}
 	return tokenString, nil
 }
 
 //Validate jwt Token
 
-func ValidateToken(tkn string) (bool, error) {
-	if tkn == "" {
-		return false, errors.New("missing authorization header.please login again")
-	}
-	tokenString := tkn
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// validate the signing method
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		// return the key used to sign the token
-		return jwtSecret, nil
-	})
+func ValidateToken(tokenString string) (map[string]interface{}, error) {
+
+	token, err := jwtauth.VerifyToken(tokenAuth, tokenString)
 	if err != nil {
-		return false, err
+		return map[string]interface{}{}, err
 	}
-	fmt.Println(token)
-	return true, nil
+	tokenMap, err := token.AsMap(context.TODO())
+	if err != nil {
+		return map[string]interface{}{}, errors.New("internal server error")
+	}
+	return tokenMap, nil
 }

@@ -2,35 +2,42 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/StudentTeacher-Booking-Appointment/pkg/helper"
 	"github.com/StudentTeacher-Booking-Appointment/pkg/model"
+	"github.com/go-chi/jwtauth/v5"
 )
 
-func RequireAuth(next http.HandlerFunc) http.HandlerFunc {
+func RequireAuth(next http.HandlerFunc, role string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Check if the user is authenticated
-		tkn, err := r.Cookie("token")
-		if err != nil {
-			log.Println(err)
+		tkn := jwtauth.TokenFromCookie(r)
+		if tkn == "" {
+			log.Println("user not loggedin")
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(model.ResponseStatus{Err: "user not loggedin"})
 			return
 		}
-		ok, err := helper.ValidateToken(tkn.Value)
-		if !ok {
-			// If not, return a 401 Unauthorized error
+		// fmt.Println(tkn)
+		// ok,err :=
+		token, err := helper.ValidateToken(tkn)
+		if err != nil {
+			// 	// If not, return a 401 Unauthorized error
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(model.ResponseStatus{Err: "session failed please relogin"})
 			return
 		}
-		if err != nil {
-			log.Println(err)
+		if role == token["role"] {
+			fmt.Println(r.URL.User.Username())
+			next(w, r)
 			return
 		}
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(model.ResponseStatus{Err: "insufficient permision to access this resource"})
 		// If the user is authenticated, call the next handler function
-		next(w, r)
+
 	}
 }
