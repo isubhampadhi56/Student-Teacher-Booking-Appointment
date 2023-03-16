@@ -13,4 +13,6 @@ func RegisterRoute(r chi.Router) {
 	r.Get("/logout", controller.Logout)
 	r.Get("/", middleware.RequireAuth(controller.Home, "student"))
 	r.Get("/search", middleware.RequireAuth(controller.SearchTeacher, "student"))
+	r.Get("/approve", middleware.RequireAuth(controller.ListUnApprovedStudent, "admin"))
+	r.Post("/approve", middleware.RequireAuth(controller.ApproveStudent, "admin"))
 }

@@ -17,7 +17,7 @@ func RequireAuth(next http.HandlerFunc, role string) http.HandlerFunc {
 		tkn := jwtauth.TokenFromCookie(r)
 		if tkn == "" {
 			log.Println("user not loggedin")
-			w.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusForbidden)
 			json.NewEncoder(w).Encode(model.ResponseStatus{Err: "user not loggedin"})
 			return
 		}
@@ -26,8 +26,8 @@ func RequireAuth(next http.HandlerFunc, role string) http.HandlerFunc {
 		token, err := helper.ValidateToken(tkn)
 		if err != nil {
 			// 	// If not, return a 401 Unauthorized error
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(model.ResponseStatus{Err: "session failed please relogin"})
+			w.WriteHeader(http.StatusForbidden)
+			json.NewEncoder(w).Encode(model.ResponseStatus{Err: "session expired please relogin"})
 			return
 		}
 		if role == token["role"] {
@@ -35,7 +35,7 @@ func RequireAuth(next http.HandlerFunc, role string) http.HandlerFunc {
 			next(w, r)
 			return
 		}
-		w.WriteHeader(http.StatusUnauthorized)
+		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(model.ResponseStatus{Err: "insufficient permision to access this resource"})
 		// If the user is authenticated, call the next handler function
 
