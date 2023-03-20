@@ -15,4 +15,8 @@ func RegisterRoute(r chi.Router) {
 	r.Get("/search", middleware.RequireAuth(controller.SearchTeacher, "student"))
 	r.Get("/approve", middleware.RequireAuth(controller.ListUnApprovedStudent, "admin"))
 	r.Post("/approve", middleware.RequireAuth(controller.ApproveStudent, "admin"))
+	r.Post("/addteacher", middleware.RequireAuth(controller.AddTeacher, "admin"))
+	r.Post("/book", middleware.RequireAuth(controller.BookAppointment, "student"))
+	r.Get("/getappointments", middleware.RequireAuth(controller.ListAppointments, "teacher"))
+	r.Post("/scheduleappointment", middleware.RequireAuth(controller.ScheduleAppointment, "teacher"))
 }

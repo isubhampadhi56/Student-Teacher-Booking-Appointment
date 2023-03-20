@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -31,8 +31,8 @@ func RequireAuth(next http.HandlerFunc, role string) http.HandlerFunc {
 			return
 		}
 		if role == token["role"] {
-			fmt.Println(r.URL.User.Username())
-			next(w, r)
+			ctx := context.WithValue(r.Context(), "curuser", token["username"].(string))
+			next(w, r.WithContext(ctx))
 			return
 		}
 		w.WriteHeader(http.StatusForbidden)

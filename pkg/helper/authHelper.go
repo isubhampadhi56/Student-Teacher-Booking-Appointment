@@ -113,11 +113,10 @@ func SignupHelper(user model.User) error {
 	return nil
 }
 
-var jwtSecret = []byte("Hello")
 var tokenAuth *jwtauth.JWTAuth
 
 func init() {
-	tokenAuth = jwtauth.New("HS256", jwtSecret, nil)
+	tokenAuth = jwtauth.New("HS256", config.JwtSecret, nil)
 }
 
 // Generate jwt Token
@@ -126,7 +125,7 @@ func GenerateToken(user map[string]interface{}) (string, error) {
 	claims := map[string]interface{}{
 		"username":      user["username"].(string),
 		"role":          user["role"].(string),
-		"exp":           time.Now().Add(time.Second * 10).Unix(),
+		"exp":           time.Now().Add(time.Minute * 10).Unix(),
 		"refresh_token": user["refresh_token"].(string),
 	}
 	_, tokenString, err := tokenAuth.Encode(claims)
@@ -149,4 +148,17 @@ func ValidateToken(tokenString string) (map[string]interface{}, error) {
 		return map[string]interface{}{}, errors.New("internal server error")
 	}
 	return tokenMap, nil
+}
+
+func FindUser(user string) (model.Users, error) {
+	const colName = "users"
+	coll := config.Conn.Database(config.Database).Collection(colName)
+	var userDetails model.Users
+	filter := bson.M{"username": user}
+	err := coll.FindOne(context.TODO(), filter).Decode(&userDetails)
+	userDetails.RemovePassword()
+	if err != nil {
+		return model.Users{}, err
+	}
+	return userDetails, nil
 }

@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -65,6 +66,9 @@ func (u *Users) EncryptPassword() error {
 	}
 	return nil
 }
+func (u *Users) RemovePassword() {
+	u.Password = ""
+}
 func (s *Students) SetRole() {
 	s.Uid = primitive.NewObjectID()
 	s.Role = "student"
@@ -92,6 +96,7 @@ func (s *Students) Validate() error {
 
 func (t *Teachers) Validate() error {
 	err := validate.Struct(t)
+	log.Println(err)
 	if err != nil {
 		return errors.New("invalid user data for teacher")
 	}

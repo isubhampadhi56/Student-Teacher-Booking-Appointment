@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/StudentTeacher-Booking-Appointment/pkg/config"
+	"github.com/StudentTeacher-Booking-Appointment/pkg/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -38,4 +39,25 @@ func SearchTeacherHelper(searchTerm string) ([]bson.M, error) {
 		results = append(results, result)
 	}
 	return results, nil
+}
+
+func AppointmentHelper(appointment *model.Appointment) (string, string, error) {
+	var collName = "users"
+	coll := config.Conn.Database(config.Database).Collection(collName)
+	filter := bson.M{"username": appointment.Teacher, "role": "teacher"}
+	var user model.Users
+	err := coll.FindOne(context.TODO(), filter).Decode(&user)
+	if err != nil {
+		log.Panicln(err)
+		return "", "", err
+	}
+	collName = "appointment"
+	coll = config.Conn.Database(config.Database).Collection(collName)
+	appointment.Book()
+	_, err = coll.InsertOne(context.TODO(), appointment)
+	if err != nil {
+		log.Println(err)
+		return "", "", err
+	}
+	return user.Email, user.FirstName, nil
 }
